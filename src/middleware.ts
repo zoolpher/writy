@@ -1,8 +1,11 @@
 import { clerkMiddleware } from '@clerk/nextjs/server';
 
 export default clerkMiddleware(async (auth, req) => {
-  // Allow public access to the landing page and any room links
-  const isPublic = req.nextUrl.pathname === '/' || req.nextUrl.pathname.startsWith('/room');
+  // Allow public access to the landing page, room links, and the Liveblocks authentication API
+  const isPublic = 
+    req.nextUrl.pathname === '/' || 
+    req.nextUrl.pathname.startsWith('/room') ||
+    req.nextUrl.pathname === '/api/liveblocks-auth';
   
   if (!isPublic) {
     await auth.protect();
