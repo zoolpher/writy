@@ -1,6 +1,8 @@
 import Navbar from "@/components/layout/Navbar";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { randomUUID } from "crypto";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -10,6 +12,9 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
+  // Generate a random unique ID for a new room
+  const newRoomId = randomUUID();
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -17,9 +22,10 @@ export default async function DashboardPage() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Your Boards</h1>
-          <button className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition shadow-sm">
+          {/* Wire up the New Board button to route to a brand new random room */}
+          <Link href={`/room/${newRoomId}`} className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition shadow-sm">
             + New Board
-          </button>
+          </Link>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center text-gray-500">
