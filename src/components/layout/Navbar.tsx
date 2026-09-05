@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { PenTool } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { NavSignIn } from "@/components/auth/AuthButtons";
 
-export default function Navbar() {
+export default async function Navbar() {
+  const { userId } = await auth();
+
   return (
     <header className="w-full border-b bg-white">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -11,11 +16,13 @@ export default function Navbar() {
           <span>Writy</span>
         </Link>
 
-        {/* Auth Section (We will wire Clerk into this later) */}
+        {/* Auth Section */}
         <div className="flex items-center gap-4">
-          <div className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 cursor-pointer transition">
-            Sign In
-          </div>
+          {!userId ? (
+            <NavSignIn />
+          ) : (
+            <UserButton />
+          )}
         </div>
       </div>
     </header>

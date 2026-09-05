@@ -1,6 +1,11 @@
 import Navbar from "@/components/layout/Navbar";
+import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
+import { HeroSignIn } from "@/components/auth/AuthButtons";
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -14,9 +19,13 @@ export default function Home() {
         </p>
         
         <div className="flex gap-4">
-          <button className="px-8 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl">
-            Create a Board
-          </button>
+          {!userId ? (
+            <HeroSignIn />
+          ) : (
+            <Link href="/dashboard" className="px-8 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl">
+              Go to Dashboard
+            </Link>
+          )}
         </div>
       </main>
     </div>
