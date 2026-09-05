@@ -5,6 +5,10 @@ import { Liveblocks } from "@liveblocks/node";
 import { createNewBoard } from "./actions";
 import { BoardCard } from "./BoardCard";
 
+// Force Next.js to ALWAYS fetch the latest boards from the database!
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });

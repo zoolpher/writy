@@ -27,7 +27,7 @@ export async function createNewBoard() {
     }
   });
 
-  redirect(`/room/${shareToken}`);
+  redirect(`/room/${roomId}?token=${shareToken}`);
 }
 
 export async function openBoard(roomId: string) {
@@ -37,11 +37,19 @@ export async function openBoard(roomId: string) {
   const room = await liveblocks.getRoom(roomId);
   
   if (room.metadata?.creatorId && room.metadata.creatorId !== userId) {
-    throw new Error(`Unauthorized. Creator: ${room.metadata.creatorId}, User: ${userId}`);
+    throw new Error(`Unauthorized`);
   }
 
-  // We no longer rotate the link here! Just redirect to the existing persistent link.
-  redirect(`/room/${room.metadata.shareToken}`);
+  // Backwards compatibility for older boards that don't have a shareToken yet!
+  let token = room.metadata.shareToken as string | undefined;
+  if (!token) {
+    token = randomUUID();
+    await liveblocks.updateRoom(roomId, {
+      metadata: { ...room.metadata, shareToken: token }
+    });
+  }
+
+  redirect(`/room/${roomId}?token=${token}`);
 }
 
 export async function endBoardAction(roomId: string) {
@@ -54,10 +62,8 @@ export async function endBoardAction(roomId: string) {
     throw new Error("Unauthorized");
   }
 
-  // 1. Send a WebSocket message to all currently connected users to kick them out instantly
   await liveblocks.broadcastEvent(roomId, { type: "KICK_ALL" });
 
-  // 2. Rotate the token so the old link is immediately dead
   const newShareToken = randomUUID();
   
   await liveblocks.updateRoom(roomId, {
