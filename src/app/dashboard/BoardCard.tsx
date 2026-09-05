@@ -99,7 +99,9 @@ export function BoardCard({ room }: { room: any }) {
       </div>
 
       <div className="text-xs text-gray-400 font-medium relative z-0">
-        {room.metadata.createdAt ? new Date(room.metadata.createdAt).toLocaleDateString() : "Recently created"}
+        {room.metadata.createdAt 
+          ? new Date(room.metadata.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) 
+          : "Recently created"}
       </div>
     </div>
   );
