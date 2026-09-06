@@ -1,7 +1,6 @@
 "use client";
 
 import { Tldraw } from "tldraw";
-import "tldraw/tldraw.css";
 import { useYjsStore } from "./useYjsStore";
 import { BoardHeader } from "./BoardHeader";
 import { useEventListener } from "@liveblocks/react";
