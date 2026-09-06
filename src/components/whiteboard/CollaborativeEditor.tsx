@@ -29,12 +29,16 @@ export function CollaborativeEditor({ creatorId, roomId, title }: { creatorId: s
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
-      <Tldraw 
-        store={storeWithStatus} 
-        components={{
-          SharePanel: () => <BoardHeader creatorId={creatorId} roomId={roomId} title={title} />
-        }}
-      />
+      {/* 
+        Render the BoardHeader OUTSIDE of Tldraw's internal component engine.
+        This completely prevents Tldraw from unmounting or wiping the screen 
+        when the Clerk user session finishes loading!
+      */}
+      <div className="absolute top-3 right-3 z-[1000]">
+        <BoardHeader creatorId={creatorId} roomId={roomId} title={title} />
+      </div>
+
+      <Tldraw store={storeWithStatus} />
     </div>
   );
 }
