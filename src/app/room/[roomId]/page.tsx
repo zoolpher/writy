@@ -32,6 +32,8 @@ export default async function RoomPage({
   const { userId } = await auth();
   const creatorId = room.metadata.creatorId as string;
   const isCreator = userId === creatorId;
+  const isGuest = !userId;
+  const title = (room.metadata.title as string) || "Untitled Room";
 
   // Verify the token. If it's an old board without a token, we let the creator in so they don't get locked out.
   if (room.metadata.shareToken !== urlToken && !isCreator) {
@@ -40,7 +42,7 @@ export default async function RoomPage({
 
   return (
     <main className="w-full h-screen bg-gray-50">
-      <Room roomId={roomId} creatorId={creatorId} />
+      <Room roomId={roomId} creatorId={creatorId} title={title} isGuest={isGuest} />
     </main>
   );
 }

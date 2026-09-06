@@ -2,6 +2,7 @@ import Navbar from "@/components/layout/Navbar";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { HeroSignIn } from "@/components/auth/AuthButtons";
+import Image from "next/image";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -30,21 +31,37 @@ export default async function Home() {
       </main>
 
       {/* Creator Attribution Footer */}
-      <footer className="w-full py-8 text-center text-sm text-gray-500 flex flex-col items-center justify-center gap-2">
-        <p>
-          Crafted with passion by <a href="https://github.com/Zoolpher" target="_blank" rel="noopener noreferrer" className="font-semibold text-gray-700 hover:text-blue-600 transition">Zoolpher</a>
-        </p>
+      <footer className="w-full py-8 text-center text-sm text-gray-500 flex flex-col items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-1.5">
+          <span>Crafted with passion by</span>
+          <a 
+            href="https://github.com/Zoolpher" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-2 font-semibold text-gray-700 hover:text-blue-600 transition ml-1"
+          >
+            {/* The circular logo image */}
+            <Image 
+              src="/zoolpher-logo.jpeg" 
+              alt="Zoolpher Logo" 
+              width={22} 
+              height={22} 
+              className="rounded-full object-cover border border-gray-200 shadow-sm"
+            />
+            Zoolpher
+          </a>
+        </div>
+        
         <a 
           href="https://github.com/Zoolpher/Writy" 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition font-medium"
         >
-          {/* Using a bulletproof raw SVG for GitHub to avoid Lucide versioning conflicts */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

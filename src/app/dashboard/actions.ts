@@ -10,10 +10,11 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
-export async function createNewBoard() {
+export async function createNewBoard(formData: FormData) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
+  const title = formData.get("title") as string;
   const roomId = randomUUID();
   const shareToken = randomUUID(); 
 
@@ -21,7 +22,7 @@ export async function createNewBoard() {
     defaultAccesses: ["room:write"],
     metadata: {
       creatorId: userId,
-      title: "New Whiteboard",
+      title: title,
       createdAt: new Date().toISOString(),
       shareToken: shareToken, 
     }

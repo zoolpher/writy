@@ -8,7 +8,7 @@ import { useEventListener } from "@liveblocks/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
-export function CollaborativeEditor({ creatorId, roomId }: { creatorId: string, roomId: string }) {
+export function CollaborativeEditor({ creatorId, roomId, title }: { creatorId: string, roomId: string, title: string }) {
   const storeWithStatus = useYjsStore();
   const router = useRouter();
   
@@ -32,7 +32,7 @@ export function CollaborativeEditor({ creatorId, roomId }: { creatorId: string, 
       <Tldraw 
         store={storeWithStatus} 
         components={{
-          SharePanel: () => <BoardHeader creatorId={creatorId} roomId={roomId} />
+          SharePanel: () => <BoardHeader creatorId={creatorId} roomId={roomId} title={title} />
         }}
       />
     </div>

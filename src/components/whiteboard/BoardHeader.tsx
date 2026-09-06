@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Link2, Check, ArrowLeft, Power } from "lucide-react";
+import { Link2, Check, ArrowLeft, Power, LogOut } from "lucide-react";
 import Link from "next/link";
 import { endBoardAction } from "@/app/dashboard/actions";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
-export function BoardHeader({ creatorId, roomId }: { creatorId: string, roomId: string }) {
+export function BoardHeader({ creatorId, roomId, title }: { creatorId: string, roomId: string, title: string }) {
   const [copied, setCopied] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const router = useRouter();
   
   // Use Clerk's exact client-side session to guarantee 100% accuracy without server-cache issues!
   const { user } = useUser();
@@ -28,21 +30,36 @@ export function BoardHeader({ creatorId, roomId }: { creatorId: string, roomId: 
     }
   };
 
+  const handleLeaveBoard = () => {
+    if (confirm("Are you sure you want to leave this board?")) {
+      if (user) {
+        router.push("/dashboard");
+      } else {
+        router.push("/");
+      }
+    }
+  };
+
   return (
     <div className="flex items-center gap-2 pointer-events-auto mr-2">
-      <Link 
-        href="/dashboard"
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white/80 hover:bg-white backdrop-blur-md border border-gray-200/50 rounded-lg transition-all shadow-sm"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        Dashboard
-      </Link>
+      
+      {/* Title Display */}
+      <div className="flex items-center justify-center px-4 py-1.5 text-sm font-bold text-gray-800 bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-lg shadow-sm mr-2 max-w-[200px] truncate">
+        {title}
+      </div>
 
-      {/* Force rendering of a debug message just in case the button still doesn't show! */}
-      {!isCreator && user && (
-         <div className="text-xs text-gray-400">Guest View</div>
+      {/* Only show Dashboard button if they actually have an account */}
+      {user && (
+        <Link 
+          href="/dashboard"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white/80 hover:bg-white backdrop-blur-md border border-gray-200/50 rounded-lg transition-all shadow-sm"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Dashboard
+        </Link>
       )}
 
+      {/* Creator Only: Destructive End Board */}
       {isCreator && (
         <button 
           onClick={handleEndBoard}
@@ -54,6 +71,18 @@ export function BoardHeader({ creatorId, roomId }: { creatorId: string, roomId: 
         </button>
       )}
 
+      {/* Candidates Only: Non-Destructive Leave Board */}
+      {!isCreator && (
+        <button 
+          onClick={handleLeaveBoard}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50/90 hover:bg-rose-100/90 backdrop-blur-md border border-rose-200/50 rounded-lg transition-all shadow-sm"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Leave Board
+        </button>
+      )}
+
+      {/* Share Room Button */}
       <button 
         onClick={copyLink}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold backdrop-blur-md border rounded-lg transition-all shadow-sm ${
