@@ -1,7 +1,10 @@
-import { Room } from "@/components/whiteboard/Room";
+import { notFound, redirect } from "next/navigation";
 import { Liveblocks } from "@liveblocks/node";
-import { notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 import { auth } from "@clerk/nextjs/server";
+
+// Force Client-Only rendering for the Whiteboard to prevent ANY Next.js SSR crashes
+const Room = dynamic(() => import("@/components/whiteboard/Room").then(mod => mod.Room), { ssr: false });
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
