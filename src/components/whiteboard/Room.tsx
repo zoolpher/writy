@@ -3,6 +3,7 @@
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react";
 import { CollaborativeEditor } from "./CollaborativeEditor";
 import { useState, useEffect } from "react";
+import { ErrorBoundary } from "../ErrorBoundary";
 
 export function Room({ roomId, creatorId, title, isGuest }: { roomId: string, creatorId: string, title: string, isGuest: boolean }) {
   const [guestName, setGuestName] = useState<string | null>(null);
@@ -74,11 +75,11 @@ export function Room({ roomId, creatorId, title, isGuest }: { roomId: string, cr
       }}
     >
       <RoomProvider id={roomId}>
-        
-        <ClientSideSuspense fallback={<div className="flex items-center justify-center h-screen text-xl font-medium text-gray-500 bg-gray-50">Connecting to Whiteboard...</div>}>
-          <CollaborativeEditor creatorId={creatorId} roomId={roomId} title={title} />
-        </ClientSideSuspense>
-
+        <ErrorBoundary>
+          <ClientSideSuspense fallback={<div className="flex items-center justify-center h-screen text-xl font-medium text-gray-500 bg-gray-50">Connecting to Whiteboard...</div>}>
+            <CollaborativeEditor creatorId={creatorId} roomId={roomId} title={title} />
+          </ClientSideSuspense>
+        </ErrorBoundary>
       </RoomProvider>
     </LiveblocksProvider>
   );
