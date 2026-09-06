@@ -79,7 +79,7 @@ export function useYjsStore() {
       yProvider.destroy()
       yDoc.destroy()
     }
-  }, [room])
+  }, [room.id])
 
   return storeWithStatus
 }
