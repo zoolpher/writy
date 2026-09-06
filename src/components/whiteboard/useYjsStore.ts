@@ -1,89 +1,118 @@
-import { useState, useEffect } from 'react'
-import { createTLStore, defaultShapeUtils, TLRecord, TLStoreWithStatus } from 'tldraw'
-import * as Y from 'yjs'
-import { LiveblocksYjsProvider } from '@liveblocks/yjs'
-import { useRoom } from '@liveblocks/react'
+import { useEffect, useMemo, useState } from "react";
+import { useRoom } from "@liveblocks/react";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { YKeyValue } from "y-utility/y-keyvalue";
+import * as Y from "yjs";
+import {
+  createTLStore,
+  transact,
+  defaultShapeUtils,
+  TLRecord,
+  TLStoreWithStatus,
+} from "tldraw";
 
 export function useYjsStore() {
-  const room = useRoom()
-  const [storeWithStatus, setStoreWithStatus] = useState<TLStoreWithStatus>({
-    status: 'loading',
-  })
+  const room = useRoom();
+
+  const { yDoc, yStore, yProvider } = useMemo(() => {
+    const yDoc = new Y.Doc();
+    yDoc.gc = true;
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
+    const yArr = yDoc.getArray<{ key: string; val: TLRecord }>("tl_records");
+    const yStore = new YKeyValue(yArr);
+
+    return { yDoc, yStore, yProvider };
+  }, [room.id]);
+
+  const [store] = useState(() => createTLStore({ shapeUtils: defaultShapeUtils }));
+  const [storeWithStatus, setStoreWithStatus] = useState<TLStoreWithStatus>({ status: "loading" });
 
   useEffect(() => {
-    let unsubs: (() => void)[] = []
-    
-    // 1. Initialize the Yjs document and connect it to the Liveblocks Room
-    const yDoc = new Y.Doc()
-    const yProvider = new LiveblocksYjsProvider(room, yDoc)
-    const yMap = yDoc.getMap<TLRecord>('store')
+    setStoreWithStatus({ status: "loading" });
 
-    // 2. Create a brand new Tldraw store
-    const store = createTLStore({ shapeUtils: defaultShapeUtils })
+    const unsubs: (() => void)[] = [];
+    let hasInitialized = false;
 
-    // Track if we have already initialized to prevent duplicate listeners on reconnects!
-    let hasInitialized = false
+    function handleSync(isSynced: boolean) {
+      if (!isSynced || hasInitialized) return;
+      hasInitialized = true;
 
-    // 3. Setup the real-time sync once connected
-    const handleSync = (isSynced: boolean) => {
-      if (!isSynced || hasInitialized) return
-      hasInitialized = true
-
-      // If the room is completely empty (brand new), initialize the canvas layout
-      if (yMap.size === 0) {
+      // 1. Initialize tldraw from Yjs, or if Yjs empty, init Yjs from default tldraw records
+      if (yStore.yarray.length) {
+        transact(() => {
+          store.clear();
+          const records = yStore.yarray.toJSON().map((item: any) => item.val);
+          store.put(records);
+        });
+      } else {
         yDoc.transact(() => {
-          yMap.set('document:document' as any, { typeName: 'document', id: 'document:document', gridSize: 10, name: '', meta: {} } as any)
-          yMap.set('page:page' as any, { typeName: 'page', id: 'page:page', name: 'Page 1', index: 'a1', meta: {} } as any)
-        })
+          for (const record of store.allRecords()) {
+            yStore.set(record.id, record);
+          }
+        });
       }
 
-      // Sync the initial drawing state from Liveblocks to the local canvas
-      store.mergeRemoteChanges(() => {
-        store.put(Array.from(yMap.values()))
-      })
-
-      // Watch for changes from OTHER users over WebSockets
-      yMap.observe((event) => {
-        store.mergeRemoteChanges(() => {
-          event.changes.keys.forEach((change, key) => {
-            if (change.action === 'add' || change.action === 'update') {
-              store.put([yMap.get(key)!])
-            } else if (change.action === 'delete') {
-              store.remove([key as any])
-            }
-          })
-        })
-      })
-
-      // Watch for YOUR local drawings and send them to Liveblocks
+      // 2. Sync tldraw changes back to Yjs
       unsubs.push(
         store.listen(
           ({ changes }) => {
             yDoc.transact(() => {
-              Object.values(changes.added).forEach((record) => yMap.set(record.id, record))
-              Object.values(changes.updated).forEach(([_, record]) => yMap.set(record.id, record))
-              Object.values(changes.removed).forEach((record) => yMap.delete(record.id))
-            })
+              Object.values(changes.added).forEach((record) => { yStore.set(record.id, record); });
+              Object.values(changes.updated).forEach(([_, record]) => { yStore.set(record.id, record); });
+              Object.values(changes.removed).forEach((record) => { yStore.delete(record.id); });
+            });
           },
-          { source: 'user', scope: 'document' } 
+          { source: "user", scope: "document" }
         )
-      )
+      );
 
-      // Tell Tldraw that the store is completely ready to use
-      setStoreWithStatus({ store, status: 'synced-remote', connectionStatus: 'online' })
+      // 3. Sync Yjs changes back to tldraw
+      const handleChange = (
+        changes: Map<string, any>,
+        transaction: Y.Transaction
+      ) => {
+        if (transaction.local) return;
+
+        const toRemove: TLRecord["id"][] = [];
+        const toPut: TLRecord[] = [];
+
+        changes.forEach((change, id) => {
+          switch (change.action) {
+            case "add":
+            case "update":
+              toPut.push(yStore.get(id)!);
+              break;
+            case "delete":
+              toRemove.push(id as TLRecord["id"]);
+              break;
+          }
+        });
+
+        store.mergeRemoteChanges(() => {
+          if (toRemove.length) store.remove(toRemove);
+          if (toPut.length) store.put(toPut);
+        });
+      };
+
+      yStore.on("change", handleChange);
+      unsubs.push(() => yStore.off("change", handleChange));
+
+      setStoreWithStatus({
+        store,
+        status: "synced-remote",
+        connectionStatus: "online",
+      });
     }
 
-    // Attach the sync handler
-    yProvider.on('sync', handleSync)
+    yProvider.on("sync", handleSync);
 
-    // Cleanup when the user leaves the room
     return () => {
-      unsubs.forEach((fn) => fn())
-      yProvider.off('sync', handleSync)
-      yProvider.destroy()
-      yDoc.destroy()
-    }
-  }, [room.id])
+      unsubs.forEach((fn) => fn());
+      yProvider.off("sync", handleSync);
+      yProvider.destroy();
+      yDoc.destroy();
+    };
+  }, [yProvider, yDoc, store, yStore]);
 
-  return storeWithStatus
+  return storeWithStatus;
 }

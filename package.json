@@ -19,6 +19,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tldraw": "^5.4.0",
+    "y-utility": "^0.1.4",
     "yjs": "^13.6.32"
   },
   "devDependencies": {
