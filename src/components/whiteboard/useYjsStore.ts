@@ -21,9 +21,13 @@ export function useYjsStore() {
     // 2. Create a brand new Tldraw store
     const store = createTLStore({ shapeUtils: defaultShapeUtils })
 
+    // Track if we have already initialized to prevent duplicate listeners on reconnects!
+    let hasInitialized = false
+
     // 3. Setup the real-time sync once connected
     const handleSync = (isSynced: boolean) => {
-      if (!isSynced) return
+      if (!isSynced || hasInitialized) return
+      hasInitialized = true
 
       // If the room is completely empty (brand new), initialize the canvas layout
       if (yMap.size === 0) {
