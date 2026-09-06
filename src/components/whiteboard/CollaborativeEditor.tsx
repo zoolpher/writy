@@ -16,7 +16,8 @@ export function CollaborativeEditor({ creatorId, roomId, title }: { creatorId: s
   const { user, isLoaded } = useUser();
 
   useEventListener(({ event }) => {
-    if (event.type === "KICK_ALL") {
+    const e = event as { type?: string };
+    if (e && e.type === "KICK_ALL") {
       // If the user has a signed-in account, send them to their dashboard
       if (user) {
         router.push("/dashboard");

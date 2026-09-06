@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const { data: rooms } = await liveblocks.getRooms({
     metadata: { creatorId: userId }
-  });
+  } as any);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
