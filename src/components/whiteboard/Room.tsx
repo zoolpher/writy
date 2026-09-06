@@ -2,7 +2,7 @@
 
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react";
 import { CollaborativeEditor } from "./CollaborativeEditor";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ErrorBoundary } from "../ErrorBoundary";
 
 export function Room({ roomId, creatorId, title, isGuest }: { roomId: string, creatorId: string, title: string, isGuest: boolean }) {
@@ -63,24 +63,24 @@ export function Room({ roomId, creatorId, title, isGuest }: { roomId: string, cr
     );
   }
 
+  const authEndpoint = useCallback(async (room: string) => {
+    const res = await fetch("/api/liveblocks-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room, guestName })
+    });
+    return await res.json();
+  }, [guestName]);
+
   return (
-    <LiveblocksProvider 
-      authEndpoint={async (room) => {
-        const res = await fetch("/api/liveblocks-auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ room, guestName })
-        });
-        return await res.json();
-      }}
-    >
-      <RoomProvider id={roomId}>
-        <ErrorBoundary>
+    <ErrorBoundary>
+      <LiveblocksProvider authEndpoint={authEndpoint}>
+        <RoomProvider id={roomId}>
           <ClientSideSuspense fallback={<div className="flex items-center justify-center h-screen text-xl font-medium text-gray-500 bg-gray-50">Connecting to Whiteboard...</div>}>
             <CollaborativeEditor creatorId={creatorId} roomId={roomId} title={title} />
           </ClientSideSuspense>
-        </ErrorBoundary>
-      </RoomProvider>
-    </LiveblocksProvider>
+        </RoomProvider>
+      </LiveblocksProvider>
+    </ErrorBoundary>
   );
 }
